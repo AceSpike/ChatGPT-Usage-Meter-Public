@@ -1,0 +1,1 @@
+{"name":"codex-usage-local","plugins":[{"name":"codex-usage","source":{"source":"local","path":"./plugins/codex-usage"},"policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"},"category":"Productivity"}]}

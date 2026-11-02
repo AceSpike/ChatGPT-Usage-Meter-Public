@@ -1,0 +1,9 @@
+# Security policy
+
+Do not include credentials, local path overrides, browser data, real quota snapshots or raw CLI errors in issues. Report non-sensitive bugs through this repository's Issues. Do not publish vulnerability exploit details, account data or secrets; a dedicated private security-reporting contact is not yet configured. The software performs readonly quota queries using a locally installed official CLI; the MCP host receives that filtered quota data. A host or CLI compromise is outside this proof-of-concept's guarantees. This candidate has not had an independent security audit. No telemetry or remote HTTP listener is included.
+
+## Native Windows edition
+
+Windows Floating v0.4.2 (latest) and historical v0.3 are unsigned, portable .NET Framework apps. This is an unofficial community project, not an OpenAI product. It starts the installed official Codex CLI app server for read-only quota queries. Unlike the plugin, it can fall back to bounded reads of local Codex session JSONL files, projecting quota fields in memory; fallback account identity is unverified. Those files can contain conversation text and must never be uploaded. Authentication remains owned by the CLI.
+
+The app saves only validated language/background codes under LocalApplicationData/CodexUsageMeter/preferences.json. It does not register autostart, install software or include telemetry. The reviewed portable ZIP is tracked explicitly with SHA-256 checksums; other build outputs, preferences and snapshots stay untracked. A previously recorded Defender scan found no threats; it was not rerun during public-package preparation and is not an independent security audit or a guarantee. Do not bypass Windows security barriers. A clean second-PC install and sustained/multi-monitor testing remain outstanding; see [latest validation](windows-v0.4.2/VALIDATION.md). Public distribution is not a security certification.

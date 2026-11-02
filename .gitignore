@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!*.example
+auth.json
+*.exe
+*.zip
+runtime/
+.browser-profile/
+
+# Native Windows build/test output stays local. Only this reviewed download is versioned.
+/windows/bin/
+/windows/test-output/
+!/windows/downloads/ChatGPTUsageMeter-Floating-v0.3-Windows-Test.zip
+
+# Latest reviewed portable skin edition; generated account/test artifacts stay local.
+/windows-v0.4.2/bin/
+/windows-v0.4.2/test-output/
+/windows-v0.4.2/package-staging/
+!/windows-v0.4.2/downloads/ChatGPTUsageMeter-v0.4.2-Windows.zip

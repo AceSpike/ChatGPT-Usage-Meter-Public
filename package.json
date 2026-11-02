@@ -1,0 +1,1 @@
+{"name":"chatgpt-usage-meter","private":true,"version":"0.1.0-private-test.2","type":"module","engines":{"node":">=24 <25"},"scripts":{"test":"node --test tests/*.test.mjs","build":"node scripts/build.mjs","check:live":"node plugins/codex-usage/server/check.mjs"},"license":"MIT"}

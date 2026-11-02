@@ -1,0 +1,26 @@
+﻿using System;using System.IO;using System.Drawing;using System.Drawing.Imaging;using System.Collections.Generic;using System.Windows.Forms;
+public static class SkinChecks {
+ static int count;static void Check(bool ok,string message){count++;if(!ok)throw new Exception(message);}
+ static IEnumerable<Control> All(Control c){foreach(Control x in c.Controls){yield return x;foreach(var y in All(x))yield return y;}}
+ static void Bounds(Control c){foreach(Control x in c.Controls){if(!x.Visible)continue;Check(x.Right<=c.ClientSize.Width+1&&x.Bottom<=c.ClientSize.Height+1,"bounds "+x.GetType().Name+" "+x.Bounds+" parent "+c.ClientSize);if(x is Label)Check(x.Height>=x.GetPreferredSize(x.MaximumSize).Height-1,"label height "+x.Text);Bounds(x);}}
+ static void Shot(Form f,string name){Application.DoEvents();Bounds(f);using(var bmp=new Bitmap(f.Width,f.Height)){f.DrawToBitmap(bmp,new Rectangle(Point.Empty,bmp.Size));bmp.Save(Path.Combine("skin-evidence",name+".png"),ImageFormat.Png);}Console.WriteLine(name+" "+f.Width+"x"+f.Height);}
+ [STAThread]public static void Main(){Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);Directory.CreateDirectory("skin-evidence");SkinSettings.DirectoryOverride=Path.Combine(Environment.CurrentDirectory,"skin-test-"+Guid.NewGuid().ToString("N"));
+  var prefs=new SkinSettings{Tray="B",Window="D",English=true};prefs.Save("test");var read=SkinSettings.Load("test");Check(read.Tray=="B"&&read.Window=="D"&&read.English,"independent preferences survive restart");File.WriteAllText(SkinSettings.PathFor("test"),"{\"tray\":\"bad\",\"window\":\"x\"}");read=SkinSettings.Load("test");Check(read.Tray=="A"&&read.Window=="A","invalid codes fall back");File.WriteAllText(SkinSettings.PathFor("test"),"broken");Check(SkinSettings.Load("test").Tray=="A","corrupt preferences fallback");
+  string blocked=Path.Combine(Environment.CurrentDirectory,"blocked-skin-"+Guid.NewGuid().ToString("N"));File.WriteAllText(blocked,"fixture");var saveRoot=SkinSettings.DirectoryOverride;SkinSettings.DirectoryOverride=blocked;prefs.Save("test");Check(!prefs.Saved,"blocked storage is reported");SkinSettings.DirectoryOverride=saveRoot;
+  var now=DateTimeOffset.UtcNow;string[] codes={"A","B","C","D"};
+  foreach(string skin in codes)foreach(int size in new[]{16,20,24,32})foreach(string number in new[]{"0","41","96","100","?","!"}){
+    double n;double? remaining=double.TryParse(number,out n)?(double?)n:null;
+    using(var b=SkinTray.Draw(number,remaining,Color.FromArgb(70,225,158),number=="?",skin,size)){Check(b.Width==size&&b.Height==size,"exact native tray size");int whites=0;for(int y=0;y<size;y++)for(int x=0;x<size;x++)if(b.GetPixel(x,y).ToArgb()==Color.White.ToArgb())whites++;Check(whites>=4,"readable native glyph "+number);b.Save(Path.Combine("skin-evidence","tray-"+skin+"-"+size+"-"+number.Replace("?","unknown").Replace("!","failed")+".png"));}
+  }
+  foreach(string skin in codes){using(var a=SkinTray.Draw("41",41,Color.Lime,false,skin,24))using(var b=SkinTray.Draw("41",91,Color.Lime,false,skin,24)){bool differs=false;for(int y=0;y<24;y++)for(int x=0;x<24;x++)if(a.GetPixel(x,y)!=b.GetPixel(x,y))differs=true;Check(differs,"real ratio changes graphic "+skin);}}
+
+  MeterPreferences.DirectoryOverride=Path.Combine(Environment.CurrentDirectory,"codex-skin-prefs-"+Guid.NewGuid().ToString("N"));
+  var sample=new Snapshot{Official=true,At=now,Primary=new QuotaWindow{Used=59,Reset=now.AddHours(5).ToUnixTimeSeconds()}};
+  using(var f=new FloatingUsage(IntPtr.Zero,true)){f.Opacity=0;f.TopMost=false;f.ShowInTaskbar=false;f.Show();foreach(string window in codes)foreach(string tray in codes)foreach(string lang in new[]{"zh-CN","en"}){f.SelectSkins(tray,window);f.TestLanguage(lang);f.TestState(sample,false,1);Check(f.TraySkin==tray&&f.FloatingSkin==window,"independent menu state");Check(object.ReferenceEquals(sample.Primary,f.TestSnapshot.Primary),"skin preserves source snapshot");Bounds(f);if(tray=="A")foreach(float factor in new[]{1f,1.5f,2f}){f.TestState(sample,false,factor);Shot(f,"codex-"+window+"-"+lang+"-"+(int)(factor*100));}}
+   foreach(string window in codes){f.SelectSkins("C",window);f.TestLanguage("en");f.TestState(null,false,1);Shot(f,"codex-"+window+"-unknown");f.TestState(sample,true,1);Shot(f,"codex-"+window+"-cached");f.TestState(new Snapshot{At=now,Official=true,Primary=new QuotaWindow{Used=0,Reset=now.AddSeconds(-2).ToUnixTimeSeconds()}},false,1);Shot(f,"codex-"+window+"-expired");}f.SelectSkins("B","D");}
+  using(var reopened=new FloatingUsage(IntPtr.Zero,true)){Check(reopened.TraySkin=="B"&&reopened.FloatingSkin=="D","form reloads independent skin codes");}
+
+  using(var sheet=new Bitmap(440,190))using(var g=Graphics.FromImage(sheet)){g.Clear(Color.FromArgb(30,39,50));int row=0;foreach(string skin in codes){g.DrawString(skin,SystemFonts.DefaultFont,Brushes.White,5,10+row*44);int col=0;foreach(int size in new[]{16,20,24,32}){using(var bmp=SkinTray.Draw("100",100,Color.FromArgb(37,141,254),false,skin,size))g.DrawImageUnscaled(bmp,35+col*90,10+row*44);col++;}row++;}sheet.Save(Path.Combine("skin-evidence","tray-native-sheet.png"));}
+  Console.WriteLine("PASS skin checks: "+count+" assertions; SmallIconSize="+SystemInformation.SmallIconSize);
+ }
+}
